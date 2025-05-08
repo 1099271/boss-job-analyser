@@ -1,0 +1,46 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 爬虫配置指南
+
+## 目标URL配置
+
+在 [config/settings.py](mdc:config/settings.py) 中配置爬虫目标:
+
+```python
+TARGET_URLS = [
+    'https://api.example.com/data',
+    # 添加更多URL
+]
+```
+
+## 请求头配置
+
+同样在 [config/settings.py](mdc:config/settings.py) 中配置默认请求头:
+
+```python
+DEFAULT_HEADERS = {
+    'User-Agent': '...',
+    'Accept': 'application/json',
+    # 添加其他需要的请求头
+}
+```
+
+## JSON处理
+
+在 [src/scraper.py](mdc:src/scraper.py) 中的 `process_json_data()` 函数负责处理JSON响应:
+
+1. 解析JSON结构
+2. 提取需要的字段
+3. 转换为数据库可接受的格式
+
+修改此函数以适应特定API的JSON结构。
+
+## 请求频率控制
+
+为避免对服务器造成过大压力，使用以下机制:
+
+- 爬取多个URL时自动添加延迟 (`time.sleep(2)`)
+- 遇到速率限制时使用 `handle_rate_limit()` 函数

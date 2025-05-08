@@ -1,0 +1,45 @@
+# Python虚拟环境
+venv/
+env/
+ENV/
+
+# Python缓存文件
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 日志
+*.log
+logs/
+
+# 本地配置文件（包含敏感信息）
+.env
+.env.*
+
+# 编辑器/IDE文件
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# 临时文件
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+.eggs/
+*.egg-info/
+dist/
+build/
+temp/
+tmp/
+
+# 备份数据文件
+backup/
+*.json
+!package.json
+!package-lock.json

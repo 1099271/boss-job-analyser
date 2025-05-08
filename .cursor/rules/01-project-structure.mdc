@@ -1,0 +1,25 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 项目结构概览
+
+这个项目是一个Python网页爬虫系统，用于获取JSON数据并存储到MySQL数据库中。
+
+## 核心模块
+
+- **主入口**: [main.py](mdc:main.py) - 程序入口点，处理命令行参数并协调各模块
+- **配置文件**: 
+  - [config/settings.py](mdc:config/settings.py) - 爬虫设置
+  - [config/db_config.py](mdc:config/db_config.py) - 数据库连接配置
+
+## 源代码目录
+
+- **爬虫模块**: [src/scraper.py](mdc:src/scraper.py) - 负责获取和处理JSON数据
+- **数据库模块**: [src/database.py](mdc:src/database.py) - 负责数据库连接和操作
+- **工具函数**: [src/utils.py](mdc:src/utils.py) - 提供辅助功能
+
+## 项目设置
+
+- **依赖管理**: [requirements.txt](mdc:requirements.txt) - 项目依赖列表

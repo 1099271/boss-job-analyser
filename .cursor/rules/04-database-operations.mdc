@@ -1,0 +1,41 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 数据库操作指南
+
+## 连接管理
+
+- 所有数据库连接通过 [src/database.py](mdc:src/database.py) 中的 `get_connection()` 函数获取
+- 必须在完成操作后关闭连接，推荐使用 `finally` 块确保关闭
+- 连接参数在 [config/db_config.py](mdc:config/db_config.py) 中配置
+
+## 表结构
+
+表结构在 [src/database.py](mdc:src/database.py) 中的 `create_tables()` 函数中定义:
+
+```python
+CREATE TABLE IF NOT EXISTS scraped_data (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255),
+    content TEXT,
+    url VARCHAR(512),
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    source VARCHAR(100)
+)
+```
+
+修改表结构时，应在此函数中更新。
+
+## 数据操作
+
+- 单条插入: 使用 `insert_data(data_dict)` 函数
+- 批量插入: 使用 `batch_insert(data_list)` 函数
+- 查询数据: 使用 `query_data(query, params)` 函数
+
+## 安全注意事项
+
+- 始终使用参数化查询避免SQL注入
+- 不要在代码中硬编码数据库凭证
+- 确保错误信息被正确记录但不泄露敏感信息
