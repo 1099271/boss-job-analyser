@@ -1,2 +1,4 @@
-requests
-mysql-connector-python 
+requests==2.28.1
+mysql-connector-python==8.0.26
+loguru==0.6.0
+python-dotenv==1.0.0 

@@ -2,18 +2,15 @@
 Utility functions for the web scraper project.
 """
 
-import logging
 import json
 import os
+import time
 from datetime import datetime
-
-# 设置日志
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+from loguru import logger
+from config.settings import COOKIE_FILE, COOKIE_EXPIRY_MARGIN
 
 
+# 配置loguru
 def setup_logging(log_file=None):
     """
     设置更详细的日志配置
@@ -21,31 +18,25 @@ def setup_logging(log_file=None):
     Args:
         log_file: 日志文件路径(可选)，若不提供则仅输出到控制台
     """
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
+    # 移除默认处理器
+    logger.remove()
 
-    # 清除现有的处理器
-    for handler in root_logger.handlers[:]:
-        root_logger.removeHandler(handler)
-
-    # 创建控制台处理器
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-    console_format = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    # 添加控制台处理器
+    logger.add(
+        sink=lambda msg: print(msg),
+        format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
+        level="INFO",
     )
-    console_handler.setFormatter(console_format)
-    root_logger.addHandler(console_handler)
 
-    # 如果提供了日志文件路径，创建文件处理器
+    # 如果提供了日志文件路径，添加文件处理器
     if log_file:
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setLevel(logging.INFO)
-        file_format = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        logger.add(
+            sink=log_file,
+            format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}",
+            rotation="10 MB",  # 日志文件大小达到10MB时轮转
+            retention="30 days",  # 保留30天的日志
+            level="DEBUG",
         )
-        file_handler.setFormatter(file_format)
-        root_logger.addHandler(file_handler)
 
     logger.info("日志设置完成")
 
@@ -116,9 +107,92 @@ def handle_rate_limit(retry_after=None):
     Returns:
         None
     """
-    import time
-
     # 默认休眠60秒，除非指定了其他时间
     sleep_time = retry_after if retry_after else 60
     logger.warning(f"遇到速率限制，将休眠 {sleep_time} 秒")
     time.sleep(sleep_time)
+
+
+def load_cookies():
+    """
+    从文件加载Cookie
+
+    Returns:
+        dict: Cookie字典，如果文件不存在返回空字典
+    """
+    if os.path.exists(COOKIE_FILE):
+        cookies = load_from_json(COOKIE_FILE)
+        if cookies:
+            logger.info("已加载Cookie")
+            return cookies
+    logger.info("没有找到Cookie文件或文件为空")
+    return {}
+
+
+def save_cookies(cookies):
+    """
+    将Cookie保存到文件
+
+    Args:
+        cookies: Cookie字典
+
+    Returns:
+        bool: 操作是否成功
+    """
+    return save_to_json(cookies, COOKIE_FILE)
+
+
+def update_cookies_from_response(response, current_cookies=None):
+    """
+    从响应中更新Cookie
+
+    Args:
+        response: 请求响应对象
+        current_cookies: 当前的Cookie字典，如果为None则从文件加载
+
+    Returns:
+        dict: 更新后的Cookie字典
+    """
+    if current_cookies is None:
+        current_cookies = load_cookies() or {}
+
+    if "set-cookie" in response.headers:
+        # requests库使用getlist或get_all获取所有同名header
+        try:
+            # 尝试使用getlist方法（requests库新版本）
+            raw_cookies = response.headers.getlist("set-cookie")
+        except AttributeError:
+            # 如果getlist不存在，尝试获取单个值
+            set_cookie = response.headers.get("set-cookie")
+            if set_cookie:
+                raw_cookies = [set_cookie]
+            else:
+                raw_cookies = []
+                logger.warning("无法从响应中获取set-cookie头")
+
+        for cookie_str in raw_cookies:
+            try:
+                # 简单解析set-cookie字符串
+                parts = cookie_str.split(";")[0].strip().split("=", 1)
+                if len(parts) == 2:
+                    name, value = parts
+                    current_cookies[name] = value
+                    logger.debug(f"已更新Cookie: {name}")
+            except Exception as e:
+                logger.error(f"解析Cookie时出错: {e}")
+
+    save_cookies(current_cookies)
+    return current_cookies
+
+
+def cookies_dict_to_str(cookies_dict):
+    """
+    将Cookie字典转换为请求头所需的字符串格式
+
+    Args:
+        cookies_dict: Cookie字典
+
+    Returns:
+        str: Cookie字符串
+    """
+    return "; ".join([f"{k}={v}" for k, v in cookies_dict.items()])
