@@ -13,11 +13,11 @@ load_dotenv()
 
 # 数据库连接配置
 DB_CONFIG = {
-    "host": os.getenv("DB_HOST", "localhost"),
-    "user": os.getenv("DB_USER", "dev_user"),
-    "password": os.getenv("DB_PASSWORD", "Dev#@#123"),
-    "database": os.getenv("DB_NAME", "dev"),
-    "port": int(os.getenv("DB_PORT", "3306")),
+    "host": os.getenv("DB_HOST"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "database": os.getenv("DB_NAME"),
+    "port": int(os.getenv("DB_PORT")),
 }
 
 # 表前缀

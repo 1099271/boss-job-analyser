@@ -38,3 +38,6 @@ COOKIE_EXPIRY_MARGIN = 3600  # 提前1小时视为过期
 
 # 数据备份配置
 BACKUP_DIR = "data_backup"
+
+# JSON响应文件目录
+JSON_RESPONSES_DIR = os.getenv("JSON_RESPONSES_DIR", "json_responses")

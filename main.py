@@ -18,6 +18,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from src.database import create_tables
 from src.scraper import scrape_all_targets
+from src.import_json import import_all_json_files
 from src.utils import (
     setup_logging,
     get_timestamp,
@@ -25,7 +26,7 @@ from src.utils import (
     load_cookies,
     save_cookies,
 )
-from config.settings import DEFAULT_PARAMS, BACKUP_DIR, COOKIE_FILE
+from config.settings import DEFAULT_PARAMS, BACKUP_DIR, COOKIE_FILE, JSON_RESPONSES_DIR
 
 
 def main():
@@ -44,6 +45,13 @@ def main():
     parser.add_argument("--city", help="城市代码，默认使用配置文件中的设置")
     parser.add_argument(
         "--set-cookie", help="设置Cookie，格式为JSON字符串或JSON文件路径"
+    )
+    # 添加从本地JSON文件导入数据的参数
+    parser.add_argument(
+        "--import-json", action="store_true", help="从本地JSON文件导入数据"
+    )
+    parser.add_argument(
+        "--json-dir", help=f"JSON文件所在目录，默认为 {JSON_RESPONSES_DIR}"
     )
     args = parser.parse_args()
 
@@ -92,6 +100,31 @@ def main():
     logger.info("检查数据库表结构...")
     if not create_tables():
         logger.error("无法设置数据库表，程序终止")
+        return
+
+    # 如果是导入本地JSON文件
+    if args.import_json:
+        logger.info("开始从本地JSON文件导入数据...")
+        json_dir = args.json_dir if args.json_dir else JSON_RESPONSES_DIR
+
+        # 确保目录存在
+        if not os.path.exists(json_dir):
+            logger.error(f"JSON响应目录不存在: {json_dir}")
+            return
+
+        start_time = datetime.now()
+        result = import_all_json_files(json_dir)
+
+        end_time = datetime.now()
+        duration = (end_time - start_time).total_seconds()
+
+        if result["status"] == "success":
+            logger.success(f"JSON导入任务完成，耗时 {duration:.2f} 秒")
+            logger.info(f"导入结果: {result['message']}")
+        else:
+            logger.warning(f"JSON导入任务未完全成功: {result['message']}")
+
+        logger.info("========== 导入程序结束 ==========")
         return
 
     # 准备查询参数
